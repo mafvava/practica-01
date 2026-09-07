@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Entornos virtuales
+.venv/
+venv/
+env/
+
+# VS Code
+.vscode/
+
+# Compilados
+*.exe
+*.dll
+*.so
+*.o
+*.obj
+*.a
+*.lib
+
+# Arduino / ESP32
+*.bin
+*.elf
+*.map
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Variables de entorno
+.env
+.env.*
