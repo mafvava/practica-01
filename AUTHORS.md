@@ -1,3 +1,3 @@
-| Nombre | Matrícula | GitHub |
+| BRYAN MAGAÑA VALENCIA | ZS22013509 | GitHub |
 |---|---|---|
-| Bryan Magaña | TU_MATRICULA | @mafvava |
+| Bryan Magaña | ZS22013509 | @mafvava |
