@@ -1,0 +1,970 @@
+# PRÁCTICA 1
+
+**Alumno:** Bryan Magaña Valencia
+**GitHub:** @mafvava
+**Asignatura:** Programacion orientada a objetos
+**Proyecto:** Simulación de control en Python y aplicación física con ESP32
+**Versión:** 1.0.0 – Python - 2.0.0 – ESP32
+
+---
+
+# Introducción
+
+En esta práctica se desarrolló un sistema de control dividido en dos partes. La primera parte consiste en una simulación realizada en Python, donde se representa el comportamiento de un reactor térmico y de presión. La segunda parte consiste en llevar los conceptos de control a un sistema físico utilizando un ESP32.
+
+El objetivo principal fue comprender cómo funciona un sistema de control de lazo cerrado, comenzando desde la lectura de sensores, pasando por el procesamiento de las variables y llegando finalmente al control de actuadores.
+
+Para realizar el proyecto se utilizaron herramientas como Python, Git, GitHub, Visual Studio Code, PlatformIO y un ESP32 DOIT DevKit V1.
+
+El proyecto también se organizó utilizando control de versiones mediante Git, permitiendo llevar un registro de los cambios realizados durante el desarrollo.
+
+---
+
+#  Objetivos
+
+## Objetivo general
+
+Desarrollar y comprobar un sistema de control que permita adquirir variables, procesarlas y tomar acciones sobre diferentes actuadores, primero mediante una simulación en Python y posteriormente mediante una implementación física utilizando un ESP32.
+
+##  Objetivos específicos
+
+* Implementar sensores virtuales de temperatura y presión.
+* Simular el comportamiento dinámico de un reactor.
+* Implementar actuadores para controlar el sistema.
+* Desarrollar modos de operación manual, automático y de pruebas.
+* Implementar condiciones de seguridad mediante un interlock.
+* Realizar pruebas de fallas en el sistema.
+* Aplicar los conceptos de control en un ESP32.
+* Leer sensores mediante entradas analógicas.
+* Controlar dispositivos mediante PWM.
+* Utilizar un LDR para controlar automáticamente la iluminación.
+* Utilizar un sensor LM35 para medir temperatura.
+* Controlar un ventilador dependiendo de la temperatura.
+* Utilizar Git y GitHub para organizar y documentar el desarrollo.
+
+---
+
+#  Herramientas utilizadas
+
+Para el desarrollo de la práctica se utilizaron las siguientes herramientas:
+
+| Herramienta          | Uso                                       |
+| -------------------- | ----------------------------------------- |
+| Python               | Simulación del sistema de control         |
+| Git                  | Control de versiones                      |
+| GitHub               | Almacenamiento y seguimiento del proyecto |
+| Visual Studio Code   | Desarrollo del código                     |
+| PlatformIO           | Compilación y carga del programa al ESP32 |
+| ESP32 DOIT DevKit V1 | Controlador físico                        |
+| Monitor Serial       | Comunicación y pruebas                    |
+| LM35                 | Sensor de temperatura                     |
+| LDR                  | Sensor de iluminación                     |
+| LED                  | Indicador de iluminación                  |
+| Ventilador DC        | Actuador térmico                          |
+| Resistencias         | Protección y división de voltaje          |
+
+---
+
+#  Organización del proyecto
+
+Desde el inicio se decidió utilizar una estructura organizada para separar el código, las pruebas y la documentación.
+
+La estructura principal quedó de la siguiente manera:
+
+```text
+practica-01/
+│
+├── .gitignore
+├── AUTHORS.md
+├── README.md
+├── platformio.ini
+│
+├── docs/
+│   ├── diagramas/
+│   └── evidencias/
+│
+├── src/
+│   ├── python/
+│   │   ├── actuators.py
+│   │   ├── controller.py
+│   │   ├── main.py
+│   │   ├── reactor.py
+│   │   └── sensors.py
+│   │
+│   └── esp32/
+│       └── main.cpp
+│
+└── tests/
+    ├── python/
+    │   └── test_reactor.py
+    │
+    └── esp32/
+```
+
+Esta organización permitió mantener separado el simulador desarrollado en Python de la implementación física realizada posteriormente con el ESP32.
+
+---
+
+#  Control de versiones
+
+Una parte importante del proyecto fue utilizar Git desde el inicio.
+
+Primero se creó el repositorio y se estableció la estructura básica del proyecto. Posteriormente se fueron agregando las diferentes funcionalidades.
+
+Los principales cambios se organizaron mediante commits, por ejemplo:
+
+```text
+chore: inicializar estructura del proyecto
+
+feat: implementar simulador de control en Python
+
+docs: documentar simulador de control en Python
+```
+
+Esto permitió tener un historial de desarrollo y comprobar cómo fue creciendo el proyecto.
+
+El repositorio fue trabajado utilizando GitHub con el usuario:
+
+```text
+mafvava
+```
+
+---
+
+#  Primera etapa: simulación en Python
+
+La primera parte de la práctica consistió en desarrollar un sistema de control completamente simulado.
+
+La idea fue representar un reactor que pudiera tener cambios de temperatura y presión y que, dependiendo de estas variables, pudiera modificar el comportamiento de sus actuadores.
+
+El sistema cuenta principalmente con:
+
+* Sensor de temperatura.
+* Sensor de presión.
+* Bomba de enfriamiento.
+* Válvula de alivio.
+* Controlador.
+* Reactor simulado.
+* Interfaz de usuario mediante consola.
+
+---
+
+#  Sensores virtuales
+
+Se creó el archivo:
+
+```text
+src/python/sensors.py
+```
+
+En este módulo se desarrollaron los sensores virtuales de temperatura y presión.
+
+El sensor de temperatura tiene un rango de:
+
+```text
+0 a 150 °C
+```
+
+Mientras que el sensor de presión trabaja entre:
+
+```text
+0 a 15 bar
+```
+
+Además, se implementó una función de límite para evitar que los valores puedan salir de los rangos establecidos.
+
+Por ejemplo, si se intenta establecer una temperatura mayor a 150 °C, el sistema la limita automáticamente a 150 °C.
+
+Esto permite simular de una manera sencilla el comportamiento de una entrada analógica limitada.
+
+---
+
+#  Actuadores
+
+Después de implementar los sensores se desarrollaron los actuadores.
+
+El sistema cuenta con dos actuadores principales:
+
+### Bomba de enfriamiento
+
+La bomba puede trabajar entre:
+
+```text
+0 % y 100 %
+```
+
+El valor representa la cantidad de enfriamiento que se está aplicando al reactor.
+
+### Válvula de alivio
+
+La válvula solamente puede tener dos estados:
+
+```text
+0 = cerrada
+1 = abierta
+```
+
+Esto representa el comportamiento de un actuador digital.
+
+También se implementaron límites para evitar que la bomba pueda recibir valores fuera de su rango.
+
+Durante las pruebas se comprobó que:
+
+```text
+150 % → 100 %
+-20 % → 0 %
+```
+
+Por lo tanto, el sistema evita valores inválidos.
+
+---
+
+#  Modelo del reactor
+
+Después se desarrolló el comportamiento dinámico del reactor.
+
+La temperatura se modifica dependiendo de la cantidad de enfriamiento aplicada por la bomba.
+
+Se utilizó la siguiente relación:
+
+```text
+ΔT = 1.5 - (0.05 × bomba)
+```
+
+Donde la bomba representa el porcentaje de operación.
+
+Por ejemplo, sin enfriamiento:
+
+```text
+ΔT = 1.5 - (0.05 × 0)
+ΔT = 1.5 °C
+```
+
+Por lo tanto, la temperatura aumenta.
+
+En cambio, con la bomba al 100 %:
+
+```text
+ΔT = 1.5 - (0.05 × 100)
+ΔT = -3.5 °C
+```
+
+Esto provoca que la temperatura disminuya.
+
+También se agregó un comportamiento para la presión. La válvula de alivio puede reducir la presión cuando se encuentra abierta.
+
+De esta manera se consiguió una simulación sencilla pero suficiente para observar cómo las acciones del controlador modifican las variables del proceso.
+
+---
+
+#  Controlador
+
+Una vez que estuvieron disponibles los sensores, actuadores y modelo del reactor, se creó el controlador.
+
+El controlador permite trabajar en tres modos:
+
+```text
+MANUAL
+AUTOMÁTICO
+PRUEBAS
+```
+
+Cada modo tiene una función diferente.
+
+---
+
+#  Modo manual
+
+En el modo manual el operador tiene control directo sobre los actuadores.
+
+Es posible establecer el porcentaje de la bomba y abrir o cerrar la válvula.
+
+Este modo fue útil para comprobar que los actuadores respondieran correctamente a las instrucciones del usuario.
+
+También permitió observar directamente cómo las acciones sobre la bomba modificaban la temperatura del reactor.
+
+---
+
+#  Modo automático
+
+En el modo automático el sistema toma las decisiones de control sin que el usuario tenga que modificar constantemente los actuadores.
+
+Se estableció una temperatura de referencia de:
+
+```text
+60 °C
+```
+
+El controlador calcula el error entre la temperatura actual y el valor de referencia.
+
+A partir de este error se calcula la acción de la bomba.
+
+El sistema también considera la presión. Si esta supera cierto valor, la válvula de alivio puede abrirse automáticamente.
+
+De esta manera se consigue un comportamiento básico de control proporcional.
+
+---
+
+#  Sistema de seguridad
+
+Una de las partes más importantes de la práctica fue implementar un sistema de seguridad.
+
+Se establecieron los siguientes límites:
+
+```text
+Temperatura límite: 85 °C
+Presión límite: 12 bar
+```
+
+Si cualquiera de estas condiciones se cumple, el sistema activa un interlock de seguridad.
+
+La acción es:
+
+```text
+Bomba = 100 %
+Válvula = abierta
+```
+
+Además, estas acciones tienen prioridad sobre las instrucciones normales del operador.
+
+Por ejemplo, aunque el usuario haya colocado manualmente la bomba en 20 %, si la temperatura supera los 85 °C, el controlador cambia la bomba automáticamente al 100 %.
+
+Esto representa una situación similar a la que puede encontrarse en sistemas industriales donde las condiciones de seguridad tienen prioridad sobre el control normal.
+
+---
+
+#  Modo de pruebas
+
+También se implementó un modo destinado a realizar pruebas de fallas.
+
+Se agregaron fallas simuladas de:
+
+```text
+Fallo de temperatura
+Fallo de presión
+```
+
+Al activar el fallo de temperatura, el sistema fuerza una temperatura de:
+
+```text
+90 °C
+```
+
+Como este valor supera el límite de 85 °C, el interlock debe activarse.
+
+De manera similar, el fallo de presión fuerza una presión de:
+
+```text
+13 bar
+```
+
+Como supera el límite de 12 bar, también se activa el sistema de seguridad.
+
+Esto permitió comprobar que las condiciones de protección realmente funcionaran.
+
+---
+
+#  Interfaz de usuario
+
+Para facilitar la interacción se desarrolló una interfaz mediante consola.
+
+La interfaz muestra información como:
+
+```text
+Temperatura
+Presión
+Estado de la bomba
+Estado de la válvula
+Modo de operación
+```
+
+También se implementó la actualización de pantalla utilizando:
+
+```python
+os.system('cls')
+```
+
+en Windows y el equivalente para sistemas POSIX.
+
+Además, se agregaron comandos específicos para consultar las variables, entre ellos:
+
+```text
+leer caudal
+leer manometro
+```
+
+Esto permite utilizar el simulador de una forma más cercana a una interfaz básica de operación.
+
+---
+
+#  Pruebas realizadas en Python
+
+Después de terminar el simulador se realizaron diferentes pruebas.
+
+Se utilizó `pytest` para comprobar automáticamente el comportamiento de las diferentes partes del sistema.
+
+Entre las pruebas realizadas se verificó:
+
+* Lectura inicial de los sensores.
+* Límites del sensor de temperatura.
+* Límites del sensor de presión.
+* Límites de la bomba.
+* Estados de la válvula.
+* Incremento de temperatura sin enfriamiento.
+* Disminución de temperatura con enfriamiento.
+* Comportamiento estable de la temperatura.
+* Activación del interlock.
+* Fallo de temperatura.
+* Fallo de presión.
+
+Las pruebas fueron ejecutadas correctamente y el resultado final fue satisfactorio.
+
+---
+
+#  Segunda etapa: implementación con ESP32
+
+Después de comprobar el funcionamiento del sistema simulado, se pasó a la implementación física.
+
+Para esta etapa se utilizó un:
+
+```text
+ESP32 DOIT DevKit V1
+```
+
+El desarrollo se realizó mediante:
+
+```text
+Visual Studio Code
+PlatformIO
+Arduino Framework
+```
+
+La comunicación con la computadora se realizó mediante el puerto:
+
+```text
+COM7
+```
+
+El ESP32 fue reconocido mediante el controlador CP210x USB-UART.
+
+---
+
+#  Configuración de PlatformIO
+
+Se configuró el archivo:
+
+```text
+platformio.ini
+```
+
+con el entorno correspondiente al ESP32.
+
+La configuración utiliza:
+
+```text
+Board: esp32doit-devkit-v1
+Framework: Arduino
+Monitor: 115200 baudios
+```
+
+También se configuró el filtro de código para que PlatformIO utilizara específicamente la carpeta:
+
+```text
+src/esp32/
+```
+
+Esto permitió mantener el programa del ESP32 separado del simulador de Python.
+
+---
+
+#  Micro-Invernadero Inteligente
+
+Para la parte física se desarrolló un pequeño sistema denominado:
+
+**Micro-Invernadero Inteligente.**
+
+El sistema utiliza sensores para obtener información del ambiente y actuadores para responder a esas condiciones.
+
+Los principales elementos son:
+
+* ESP32.
+* Sensor LM35.
+* LDR.
+* LED.
+* Ventilador DC.
+* Resistencias.
+* Fuente de alimentación.
+
+---
+
+#  Sensor de temperatura LM35
+
+El LM35 se utiliza para medir la temperatura.
+
+Su salida es analógica y entrega un voltaje proporcional a la temperatura.
+
+La señal del sensor se conecta al:
+
+```text
+GPIO34
+```
+
+El ESP32 utiliza su convertidor analógico-digital para obtener una lectura numérica.
+
+La resolución configurada es de:
+
+```text
+12 bits
+```
+
+Por lo tanto, el ADC trabaja aproximadamente entre:
+
+```text
+0 y 4095
+```
+
+La lectura se convierte posteriormente en voltaje y después en temperatura.
+
+Para el LM35 se utiliza la relación aproximada:
+
+```text
+10 mV = 1 °C
+```
+
+---
+
+#  Sensor LDR
+
+Para detectar la cantidad de luz se utilizó un LDR.
+
+El LDR se conectó formando un divisor de voltaje junto con una resistencia de aproximadamente:
+
+```text
+10 kΩ
+```
+
+La conexión utilizada es:
+
+```text
+        3.3 V
+          │
+         LDR
+          │
+          ├──────── GPIO32
+          │
+       10 kΩ
+          │
+         GND
+```
+
+El GPIO32 recibe el voltaje generado en el punto intermedio.
+
+Cuando existe más luz, la resistencia del LDR disminuye y la lectura del ADC aumenta.
+
+Cuando existe menos luz, la lectura disminuye.
+
+---
+
+#  Control automático de iluminación
+
+El sistema utiliza la lectura del LDR para controlar la intensidad del LED.
+
+La lógica implementada es:
+
+```text
+MÁS LUZ → LED menos intenso
+
+MENOS LUZ → LED más intenso
+```
+
+Esto permite que el sistema compense automáticamente los cambios de iluminación.
+
+El LED se controla mediante PWM.
+
+---
+
+#  Control PWM
+
+Para controlar los actuadores se utilizó PWM.
+
+La frecuencia configurada es:
+
+```text
+5000 Hz
+```
+
+con una resolución de:
+
+```text
+8 bits
+```
+
+Por lo tanto, el rango utilizado para el PWM es:
+
+```text
+0 a 255
+```
+
+El ESP32 utiliza diferentes canales PWM para controlar el ventilador y el LED.
+
+En el programa se utilizaron las funciones:
+
+```cpp
+ledcSetup()
+ledcAttachPin()
+ledcWrite()
+```
+
+Estas funciones permiten generar la señal PWM desde el ESP32.
+
+---
+
+#  Control del ventilador
+
+El ventilador fue planteado como el actuador encargado de disminuir la temperatura.
+
+La condición programada es:
+
+```text
+Temperatura > 30 °C
+        ↓
+Ventilador al 100 %
+```
+
+Cuando la temperatura no supera los 30 °C:
+
+```text
+Ventilador = 0 %
+```
+
+Para esta parte se debe utilizar un circuito de manejo de potencia, ya que el GPIO del ESP32 no debe alimentar directamente un motor.
+
+Por esta razón, la conexión del ventilador se considera mediante un transistor o MOSFET y una alimentación adecuada para el motor.
+
+---
+
+#  Comunicación serial
+
+También se desarrolló una interfaz de comunicación mediante el monitor serial.
+
+La velocidad utilizada es:
+
+```text
+115200 baudios
+```
+
+El sistema permite utilizar comandos como:
+
+```text
+encender
+apagar
+ajustar 50
+leer
+automatico
+```
+
+Por ejemplo:
+
+```text
+ajustar 50
+```
+
+establece el ventilador al 50 % cuando se encuentra en control manual.
+
+Mientras que:
+
+```text
+leer
+```
+
+muestra información de los sensores y actuadores.
+
+---
+
+#  Primeras pruebas del ESP32
+
+Antes de conectar los sensores se realizó una primera prueba de comunicación.
+
+El ESP32 fue programado correctamente y PlatformIO mostró:
+
+```text
+[SUCCESS]
+```
+
+Posteriormente se abrió el monitor serial.
+
+El sistema mostró:
+
+```text
+=================================
+ MICRO-INVERNADERO INTELIGENTE
+=================================
+Sistema iniciado.
+```
+
+Esto confirmó que el programa había sido cargado correctamente.
+
+---
+
+#  Pruebas de comandos
+
+Se probaron los comandos desde el monitor serial.
+
+### Encender
+
+```text
+encender
+```
+
+El sistema respondió activando el control del ventilador al 100 %.
+
+### Ajustar
+
+```text
+ajustar 50
+```
+
+El sistema modificó la salida del ventilador al 50 %.
+
+### Apagar
+
+```text
+apagar
+```
+
+El sistema estableció el ventilador en 0 %.
+
+### Leer
+
+```text
+leer
+```
+
+El sistema mostró las variables de telemetría.
+
+Las pruebas de comunicación fueron satisfactorias.
+
+---
+
+#  Pruebas de los sensores
+
+Una vez conectado el LM35 se realizó la lectura de temperatura.
+
+De igual manera se conectó el LDR para comprobar su comportamiento.
+
+En las primeras pruebas, cuando los sensores todavía no estaban conectados correctamente, se observaron valores variables debido a que las entradas analógicas podían quedar flotantes.
+
+Después de realizar las conexiones correspondientes, se procedió a comprobar los cambios de lectura.
+
+Para el LDR se realizaron dos pruebas principales:
+
+### LDR descubierto
+
+Se colocó el sensor bajo iluminación normal y se observó su lectura.
+
+### LDR cubierto
+
+Se cubrió el sensor con la mano para reducir la cantidad de luz.
+
+La lectura cambió, demostrando que el ESP32 podía detectar la variación de iluminación.
+
+---
+
+#  Prueba del control de iluminación
+
+Una vez comprobada la lectura del LDR se verificó el funcionamiento del LED.
+
+El comportamiento esperado es:
+
+```text
+LDR recibe mucha luz
+        ↓
+Lectura ADC aumenta
+        ↓
+PWM del LED disminuye
+        ↓
+LED disminuye su intensidad
+```
+
+Y en condiciones de poca luz:
+
+```text
+LDR recibe poca luz
+        ↓
+Lectura ADC disminuye
+        ↓
+PWM del LED aumenta
+        ↓
+LED aumenta su intensidad
+```
+
+Este comportamiento permite comprobar que el sistema responde automáticamente a la variable de iluminación.
+
+---
+
+#  Estado del ventilador
+
+El ventilador es la parte que requiere un circuito de potencia adicional.
+
+Por seguridad, no se debe conectar directamente al GPIO18 del ESP32.
+
+La salida del GPIO18 solamente debe utilizarse como señal de control PWM para un transistor o MOSFET.
+
+La alimentación del motor debe provenir de una fuente apropiada y debe compartir GND con el ESP32.
+
+También se debe utilizar un diodo de protección debido a que el ventilador es una carga inductiva.
+
+---
+
+#  Resultados obtenidos
+
+Durante el desarrollo se obtuvieron resultados positivos en las diferentes etapas.
+
+En Python se consiguió:
+
+* Crear sensores virtuales.
+* Crear actuadores.
+* Simular el comportamiento del reactor.
+* Implementar control manual.
+* Implementar control automático.
+* Implementar pruebas de fallas.
+* Implementar un sistema de seguridad.
+* Ejecutar pruebas automáticas correctamente.
+
+En el ESP32 se consiguió:
+
+* Compilar el proyecto mediante PlatformIO.
+* Reconocer el ESP32 mediante USB.
+* Cargar el programa correctamente.
+* Establecer comunicación serial.
+* Ejecutar comandos manuales.
+* Leer entradas analógicas.
+* Implementar PWM.
+* Controlar la intensidad del LED.
+* Implementar la lógica de control de temperatura.
+* Comprobar el comportamiento del LDR y LM35.
+
+---
+
+#  Problemas encontrados y soluciones
+
+Durante el desarrollo se presentaron algunos problemas normales de configuración.
+
+Uno de ellos fue que PlatformIO inicialmente no podía comunicarse con el ESP32 porque el puerto serial no estaba disponible.
+
+Se identificó que era necesario instalar el controlador para el convertidor:
+
+```text
+Silicon Labs CP210x
+```
+
+Después de instalarlo, el ESP32 fue reconocido como:
+
+```text
+COM7
+```
+
+Otro problema fue que PlatformIO inicialmente no encontraba los archivos de código del ESP32.
+
+Esto se solucionó configurando:
+
+```text
+build_src_filter
+```
+
+para utilizar la carpeta:
+
+```text
+src/esp32/
+```
+
+También se observó que las entradas analógicas pueden entregar valores aparentemente aleatorios cuando no tienen un sensor conectado. Esto permitió comprender la importancia de tener correctamente configuradas las entradas y los circuitos de los sensores.
+
+---
+
+#  Evidencias
+
+Como parte de la documentación del proyecto se deben incluir evidencias de las diferentes etapas.
+
+Las evidencias recomendadas son:
+
+### Python
+
+1. Pantalla principal del simulador.
+2. Modo manual.
+3. Modo automático.
+4. Activación del interlock.
+5. Fallo de temperatura.
+6. Fallo de presión.
+7. Ejecución de las pruebas con `pytest`.
+
+### ESP32
+
+1. ESP32 utilizado.
+2. Conexión del LM35.
+3. Conexión del LDR.
+4. Conexión del LED.
+5. Circuito completo.
+6. Monitor serial.
+7. Prueba de lectura de temperatura.
+8. Prueba del LDR.
+9. Cambio de intensidad del LED.
+10. Circuito de control del ventilador.
+
+También se pueden incluir los diagramas eléctricos correspondientes.
+
+---
+
+#  Videos de demostración
+
+Para complementar las evidencias se plantean dos videos cortos.
+
+## Video 1 – Python
+
+En este video se muestra:
+
+* Inicio del programa.
+* Actualización de la pantalla.
+* Modo manual.
+* Modo automático.
+* Activación de los límites de seguridad.
+* Prueba de fallos.
+* Respuesta del sistema.
+
+La duración recomendada es menor a tres minutos.
+
+
+---
+
+#  Conclusiones
+
+El desarrollo de esta práctica permitió pasar de un modelo completamente simulado a una implementación física utilizando un microcontrolador.
+
+La primera etapa en Python ayudó a comprender de manera más sencilla conceptos como sensores, actuadores, control automático, variables de proceso e interlocks de seguridad.
+
+Una de las partes más importantes fue comprobar que un sistema de control no solamente debe realizar una acción cuando todo funciona normalmente, sino que también debe reaccionar correctamente ante condiciones fuera de los límites establecidos.
+
+Posteriormente, estos conceptos se llevaron al ESP32 mediante sensores y actuadores reales.
+
+El uso del LM35 permitió trabajar con una variable física como la temperatura, mientras que el LDR permitió detectar cambios en la iluminación. A partir de estas lecturas, el ESP32 puede tomar decisiones y modificar las salidas mediante PWM.
+
+También fue importante trabajar con PlatformIO y Git, ya que permitió mantener una estructura ordenada y tener control sobre las diferentes versiones del proyecto.
+
+En general, la práctica permitió comprender de una manera más cercana cómo se construye un sistema de control desde sus primeras etapas de simulación hasta una implementación física.
+
+---
+
+
+# Resultado final
+
+El resultado final del proyecto es un sistema dividido en dos etapas complementarias.
+
+La primera representa un proceso industrial mediante un simulador desarrollado en Python, con sensores, actuadores, control automático, modos de operación y sistemas de seguridad.
+
+La segunda lleva los principios de control a un sistema físico mediante un ESP32, sensores analógicos, PWM y actuadores.
+
+De esta forma, el proyecto no solamente demuestra el funcionamiento del código, sino también el proceso completo de desarrollo: planeación, programación, pruebas, corrección de errores, integración de hardware, documentación y control de versiones.
+
+**Proyecto:** Práctica 1 – Sistemas de Control con Python y ESP32
+**Autor:** Bryan Magaña Valencia
+**GitHub:** @mafvava
